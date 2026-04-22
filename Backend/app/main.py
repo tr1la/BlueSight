@@ -39,7 +39,7 @@ def load_whisper_model():
         whisper_model_loading = True
         import whisper
         print("🔄 Loading Whisper model...")
-        whisper_model = whisper.load_model("base.en")
+        whisper_model = whisper.load_model("")
         whisper_model_timestamp = time.time()
         print("✅ Whisper model loaded successfully")
     except Exception as e:
@@ -50,7 +50,7 @@ def load_whisper_model():
     return whisper_model
 
 # Load model on startup
-load_whisper_model()
+#load_whisper_model()
 
 from app.article_reading.pipeline import execute_pipeline
 from app.question_answering.pipeline import ask_general_question
@@ -98,7 +98,13 @@ start = time.time()
 # distance_estimation_model_path = "./models/yolov8m.onnx"
 
 
-app = FastAPI()
+app = FastAPI(
+    title="BlueSight API",
+    description="Backend API for BlueSight, featuring OCR, voice commands, news fetching, and Spotify integration.",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 # Configure CORS
 app.add_middleware(
@@ -111,11 +117,11 @@ app.add_middleware(
 
 # Define allowed origins (frontend URLs)
 
-@app.get("/")
+@app.get("/", tags=["System"])
 async def read_root():
     return {"Hello": "World"}
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 async def health_check():
     global whisper_model, whisper_model_timestamp
     
@@ -136,7 +142,7 @@ async def health_check():
         }
     }
 
-@app.post("/document_recognition")
+@app.post("/document_recognition", tags=["Document Processing"])
 async def document_recognition(file: UploadFile = File(...)):
     try:
         start = time.time()
@@ -165,7 +171,7 @@ async def document_recognition(file: UploadFile = File(...)):
 image_path = "./app/dis.jpg"  
 
 
-@app.post("music_detection")
+@app.post("/music_detection", tags=["Audio & Music"])
 async def music_detection(file: UploadFile = File(...)):
     try:
         with NamedTemporaryFile(delete=False) as temp:
@@ -292,7 +298,7 @@ async def process_voice_command(file: UploadFile = File(...), current_feature: s
 from typing import Annotated
 
 
-@app.post("/transcribe_audio")
+@app.post("/transcribe_audio", tags=["Voice Commands"])
 async def voice_command(
     file: Annotated[UploadFile, File()],
     current_feature: Annotated[str, Form()]
@@ -363,7 +369,7 @@ class NewsQuery(BaseModel):
 class ChatbotQuery(BaseModel):
     message: str
 
-@app.post("/fetching_news")
+@app.post("/fetching_news", tags=["Information & Tasks"])
 async def article_reading(news_query: str = Form(...)):
 
     try:
@@ -399,7 +405,7 @@ async def article_reading(news_query: str = Form(...)):
         print(e)
         return {"error": "Failed to process audio."}
 
-@app.post("/general_question_answering")
+@app.post("/general_question_answering", tags=["Information & Tasks"])
 async def general_qa(message: str = Form(...)):
 
     try:
@@ -438,18 +444,18 @@ async def general_qa(message: str = Form(...)):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@app.get("/download_pdf")
+'''@app.get("/download_pdf", tags=["File Downloads"])
 async def download_pdf(pdf_path: str):
     return FileResponse(pdf_path, media_type="application/pdf", filename="document.pdf")
 
 
-@app.get("/download_audio")
+@app.get("/download_audio", tags=["File Downloads"])
 async def download_audio(audio_path: str):
-    return FileResponse(audio_path, media_type="audio/mpeg", filename="document.mp3")
+    return FileResponse(audio_path, media_type="audio/mpeg", filename="document.mp3")'''
 
 
 # Spotify Authentication Routes
-@app.get("/spotify/login")
+@app.get("/spotify/login", tags=["Spotify Integration"])
 async def spotify_login():
     """Redirect user to Spotify authorization page"""
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
@@ -479,7 +485,7 @@ async def spotify_login():
     
     return JSONResponse(content={"auth_url": auth_url})
 
-@app.get("/spotify/callback")
+@app.get("/spotify/callback", tags=["Spotify Integration"])
 async def spotify_callback(code: str):
     """Handle Spotify callback and exchange code for tokens"""
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
@@ -526,7 +532,7 @@ async def spotify_callback(code: str):
     })
 
 
-@app.post("/spotify/refresh")
+@app.post("/spotify/refresh", tags=["Spotify Integration"])
 async def spotify_refresh_token(request: Request):
     """Refresh Spotify access token"""
     try:

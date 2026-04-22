@@ -20,7 +20,7 @@ class Config(object):
         # self.VOICE_RSS = os.getenv('Voice_RSS')
         
         # Validate critical API keys
-        if not self.GOOGLE_API_KEY:
-            raise ValueError("GOOGLE_API_KEY environment variable is not set. Please check your .env file.")
+        # if not self.GOOGLE_API_KEY:
+        #     raise ValueError("GOOGLE_API_KEY environment variable is not set. Please check your .env file.")
 
 config = Config()
